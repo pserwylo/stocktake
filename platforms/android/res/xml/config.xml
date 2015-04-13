@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.serwylo.stocktake" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <preference name="loglevel" value="DEBUG" />
+    <name>Stocktake</name>
+    <description>
+        Stocktake designed for volunteer emergency service organisations.
+    </description>
+    <author email="peter.serwylo@gmail.com" href="http://github.com/pserwylo/stocktake">
+        Peter Serwylo
+    </author>
+    <content src="index.html" />
+    <access origin="*" />
+</widget>
