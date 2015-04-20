@@ -5,7 +5,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
 
-    <title>My App</title>
+    <title>Stocktake</title>
 
     <link rel="stylesheet" href="lib/onsen/css/onsenui.css">
     <link rel="stylesheet" href="styles/app.css"/>
@@ -15,6 +15,8 @@
     <script src="lib/onsen/js/onsenui.js"></script>
 
     <script src="cordova.js"></script>
+    <script src="js/classes.js"></script>
+    <script src="js/config.js"></script>
     <script src="js/app.js"></script>
     <script>
         ons.ready(function () {
@@ -25,6 +27,21 @@
         .item {
             padding: 10px;
             line-height: 1;
+        }
+
+        button.low,
+        .low .expected-found-count {
+            color: red;
+        }
+
+        button.correct,
+        .correct .expected-found-count {
+            color: green;
+        }
+
+        button.high,
+        .high .expected-found-count {
+            color: midnightblue;
         }
 
         .item-thum {
@@ -52,6 +69,24 @@
             color: #999;
             float: right;
         }
+
+        #count-alert .alert-dialog-footer {
+            padding-bottom: 0.5em;
+        }
+
+        #count-alert .spinner input {
+            font-size: 1.5em;
+            margin-bottom: 0.5em;
+            padding: 0.5em 0;
+            text-align: center;
+            height: auto;
+            width: 50%;
+        }
+
+        #count-alert .alert-dialog-footer button {
+            width: 45%;
+        }
+
     </style>
 </head>
 
@@ -64,7 +99,7 @@
         </ons-toolbar>
 
         <ons-list ng-controller="MasterController">
-            <ons-list-item modifier="chevron" class="item" ng-repeat="location in locations"
+            <ons-list-item modifier="chevron" class="item" ng-repeat="location in inventory"
                            ng-click="showDetail($index)">
                 <ons-row>
                     <ons-col width="60px">
@@ -90,7 +125,15 @@
             <div class="left">
                 <ons-back-button>Back</ons-back-button>
             </div>
-            <div class="center">Audit: {{location.name}}</div>
+            <div class="center">
+                Audit: {{location.name}}
+            </div>
+            <div class="right">
+                <ons-toolbar-button ng-click="onDone()">
+                    <ons-icon icon="ion-ios-checkmark-empty" size="50px"></ons-icon>
+                    Done
+                </ons-toolbar-button>
+            </div>
         </ons-toolbar>
 
         <ons-list modifier="inset" style="margin-top: 10px">
@@ -104,7 +147,7 @@
 
         <ons-list style="margin-top: 10px">
             <ons-list-item class="item" ng-repeat="item in expectedItems" ng-click="selectItem($index)">
-                <header>
+                <header class="{{ getClass( item.expectedCount, item.foundCount ) }}">
                     <span class="item-title">
                         <label class="checkbox">
                             <input type="checkbox" ng-model="item.checked">
@@ -112,7 +155,7 @@
                             {{item.name}}
                         </label>
                     </span>
-                    <span class="item-label">Expected {{item.expectedCount}}<span ng-show="item.foundCount"> / Found {{item.foundCount}}</span></span>
+                    <span class="expected-found-count item-label">Expected {{item.expectedCount}}<span ng-show="item.foundCount >= 0"> / Found {{item.foundCount}}</span></span>
                 </header>
             </ons-list-item>
         </ons-list>
@@ -123,19 +166,55 @@
 </ons-template>
 
 <ons-template id="confirm-item-stock.html">
-    <ons-alert-dialog var="alertDialog">
-        <div class="alert-dialog-title"><strong>How many?</strong></div>
+    <ons-alert-dialog var="alertDialog" id="count-alert">
+
+        <div class="alert-dialog-title">
+            <p><strong>{{item.name}}</strong></p>
+            <p>How many are there? (expected {{item.expectedCount}})</p>
+        </div>
+
         <div class="alert-dialog-content">
 
-            <button class="alert-dialog-button">1</button>
-            <button class="alert-dialog-button">2</button>
-            <button class="alert-dialog-button">3</button>
-            <button class="alert-dialog-button">5</button>
+            <div class="buttons" ng-hide="isShowingSpinner">
+                <button
+                    class="alert-dialog-button {{ getClass( item.expectedCount, options.values[ $index ] ) }}"
+                    ng-repeat="option in options.values"
+                    ng-click="onCount(options.values[ $index ])">
+                    {{options.labels[ $index ]}}
+                </button>
+            </div>
+
+            <div class="spinner" ng-show="isShowingSpinner">
+                <input
+                    type="number"
+                    min="0"
+                    datatype="numeric"
+                    class="text-input--underbar"
+                    ng-model="otherValue" />
+            </div>
 
         </div>
-        <div class="alert-dialog-footer">
-            <button class="alert-dialog-button" ng-click="alertDialog.hide(); alertDialog.show()">OK</button>
+
+        <div class="alert-dialog-footer" style="text-align: center">
+            <button
+                class="button button--outline"
+                ng-click="closeDialog();">
+                Cancel
+            </button>
+            <button
+                ng-hide="isShowingSpinner"
+                class="button button--outline"
+                ng-click="showOther()">
+                Other
+            </button>
+            <button
+                ng-show="isShowingSpinner"
+                class="button button--cta"
+                ng-click="onCount( otherValue ); closeDialog();">
+                Ok
+            </button>
         </div>
+
     </ons-alert-dialog>
 </ons-template>
 
